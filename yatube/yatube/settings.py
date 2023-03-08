@@ -155,3 +155,4 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
+HANDLER403 = 'core.views.csrf_failure'
