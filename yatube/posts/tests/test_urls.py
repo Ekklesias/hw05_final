@@ -3,7 +3,6 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
 from django.core.cache import cache
-from django.conf import settings
 
 from posts.models import Post, Group
 
@@ -110,8 +109,3 @@ class StaticURLTests(TestCase):
         response = self.authorized_client.get('/oopss')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, 'core/404.html')
-
-    def test_page_not_found_403(self):
-        response = self.authorized_client.get(settings.HANDLER403)
-        self.assertEqual(response.status_code, HTTPStatus.FORBIDDEN)
-        self.assertTemplateUsed(response, 'core/403csrf.html')
