@@ -38,10 +38,8 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    user_posts = Post.objects.filter(author=author)
-    paginator = Paginator(user_posts, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    user_posts = author.posts.all()
+    page_obj = get_page_object(request, user_posts)
     if request.user.is_authenticated and request.user != author:
         following = Follow.objects.select_related(
             'user', 'author'
@@ -59,7 +57,7 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
-    comments = Comment.objects.filter(post_id=post_id)
+    comments = post.comments.all()
     form = CommentForm(request.POST or None)
     context = {
         'post': post,

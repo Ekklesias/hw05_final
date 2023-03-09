@@ -250,12 +250,13 @@ class PaginatorViewsTest(TestCase):
             slug='paginat',
             description='For test of paginator',
         )
-        for test_post in range(1, 14):
-            Post.objects.create(
-                text=f'Text {test_post}',
-                author=cls.author_of_post2,
-                group=cls.group
-            )
+
+        posts = (Post(
+            text=f'Text {i}',
+            author=cls.author_of_post2,
+            group=cls.group
+        ) for i in range(1, 14))
+        Post.objects.bulk_create(posts)
 
     @classmethod
     def tearDownClass(cls):
@@ -268,12 +269,14 @@ class PaginatorViewsTest(TestCase):
         cache.clear()
 
     def test_first_page_contains_ten_records(self):
+        """Проверим, что первая страница содержит 10 постов"""
         response = self.client_for_author_of_post.get(reverse('posts:index'))
         self.assertEqual(
             len(response.context['page_obj']), settings.POSTS_AMOUNT
         )
 
     def test_second_page_contains_three_records(self):
+        """Проверим, что вторая страница содержит 3 поста"""
         all_posts = Post.objects.count()
         response = self.client_for_author_of_post.get(
             reverse('posts:index') + '?page=2'
@@ -284,6 +287,8 @@ class PaginatorViewsTest(TestCase):
         )
 
     def test_page_contains_ten_and_3_posts(self):
+        """Проверим, что страницы содержат 10 постов на 1ой
+        и 3 на второй страницах"""
         paginator_urls = (
             ('posts:index', None),
             ('posts:group_list', (self.group.slug,)),

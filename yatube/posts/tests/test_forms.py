@@ -26,6 +26,11 @@ class PostCreateFormTests(TestCase):
             slug='test-group',
             description='Тестовое описание группы'
         )
+        cls.group2 = Group.objects.create(
+            title='Другая тестовая группа',
+            slug='test-group2',
+            description='Другое тестовое описание группы'
+        )
         cls.form = PostForm()
         cls.small_gif = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
@@ -57,6 +62,7 @@ class PostCreateFormTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def test_create_new_post(self):
+        """Корректно создаётся новый пост"""
         tasks_count = Post.objects.count()
         self.uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -74,7 +80,7 @@ class PostCreateFormTests(TestCase):
             follow=True
         )
         self.assertEqual(Post.objects.count(), tasks_count + 1)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertRedirects(response, reverse(
             'posts:profile',
             kwargs={'username': PostCreateFormTests.author_of_post})
@@ -87,13 +93,16 @@ class PostCreateFormTests(TestCase):
             ).exists(),
             'В этом посте нет картинка'
         )
+        new_post = Post.objects.latest('id')
+        self.assertEqual(new_post.author, self.author_of_post)
+        self.assertEqual(new_post.group, self.group)
         self.assertTrue(Post.objects.filter(image='posts/small.gif').exists())
 
     def test_authorized_edit_post(self):
         """Проверяем, что автор может редактировать пост"""
         form_data = {
             'text': 'Вот мы изменили пост',
-            'group': self.group.pk
+            'group': self.group2.pk
         }
         response_edit = self.client_for_author_of_post.post(
             reverse('posts:post_edit',
@@ -107,3 +116,15 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(response_edit.status_code, HTTPStatus.OK)
         self.assertEqual(post_edit.text, form_data['text'])
         self.assertEqual(post_edit.group.id, form_data['group'])
+        old_group_response = self.client_for_author_of_post.get(
+            reverse('posts:group_list', args=(self.group.slug,))
+        )
+        self.assertEqual(
+            old_group_response.context['page_obj'].paginator.count, 0
+        )
+        new_group_response = self.client_for_author_of_post.get(
+            reverse('posts:group_list', args=(self.group2.slug,))
+        )
+        self.assertEqual(
+            new_group_response.context['page_obj'].paginator.count, 1
+        )

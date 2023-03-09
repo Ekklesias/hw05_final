@@ -106,6 +106,17 @@ class StaticURLTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_page_not_found_404(self):
+        """Проверяем, что несуществующая страница вернёт ошибку 404
+        и использует нужный шаблон"""
         response = self.authorized_client.get('/oopss')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, 'core/404.html')
+
+    def test_post_create_url_exists_at_desired_location(self):
+        """Страница create/ доступна авторизованному пользователю,
+        а гость редирект"""
+        auth_url = '/auth/login/?next='
+        response = self.authorized_client.get('/create/')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        response2 = self.client.get('/create/')
+        self.assertRedirects(response2, auth_url + '/create/')
