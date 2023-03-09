@@ -6,7 +6,7 @@ from django.views.decorators.cache import cache_page
 from django.urls import reverse
 
 from posts.forms import PostForm, CommentForm
-from .models import Post, Group, User, Comment, Follow
+from .models import Post, Group, User, Follow
 
 
 def get_page_object(request, posts):
